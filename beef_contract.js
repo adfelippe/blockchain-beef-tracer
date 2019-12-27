@@ -33,24 +33,25 @@ async function createAnimal(creationRequest) {
   creation.breed = creationRequest.breed;
   creation.location = creationRequest.location;
   creation.weight = creationRequest.weight;
-  // Check if farmer exists in the ledger
   creation.owner = factory.newRelationship(namespace, 'Farmer', creationRequest.owner.getIdentifier());
-  if (!creation.owner) {
-    throw new Error('Farmer does not exist!');
+
+  // Check if owner exists
+  const participantRegistry = await getParticipantRegistry('org.acme.beef_network.Farmer');
+  const ownerCheck = await participantRegistry.exists(creationRequest.owner.getIdentifier());
+  if (!ownerCheck) {
+    throw new Error('This Farmer does not exist!')
+  } else {
+  	// save the order
+    const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
+    await assetRegistry.add(creation);
+    // emit the event
+    const createAnimalEvent = factory.newEvent(namespace, 'createAnimalEvent');
+    createAnimalEvent.geneticId = creation.geneticId;
+    createAnimalEvent.owner = creation.owner;
+    createAnimalEvent.animalId = creation.animalId;
+    createAnimalEvent.location = creation.location;
+    createAnimalEvent.breed = creation.breed;
+    createAnimalEvent.weight = creation.weight;
+    emit(createAnimalEvent);
   }
-
-  // save the order
-
-  const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
-  await assetRegistry.add(creation);
-
-  // emit the event
-  const createAnimalEvent = factory.newEvent(namespace, 'createAnimalEvent');
-  createAnimalEvent.geneticId = creation.geneticId;
-  createAnimalEvent.owner = creation.owner;
-  createAnimalEvent.animalId = creation.animalId;
-  createAnimalEvent.location = creation.location;
-  createAnimalEvent.breed = creation.breed;
-  createAnimalEvent.weight = creation.weight;
-  emit(createAnimalEvent);
 }

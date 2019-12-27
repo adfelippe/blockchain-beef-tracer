@@ -1,0 +1,9 @@
+/**
+ * New query file
+ */
+
+query selectAnimalByGeneticId {
+  description: "Select an animal by its individual genetic ID"
+  statement:
+  	SELECT org.acme.beef_network.Animal WHERE (geneticId == _$geneticId)
+}

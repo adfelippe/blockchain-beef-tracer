@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-/* global getFactory getAssetRegistry getParticipantRegistry emit */
+/* global getFactory getAsRegistry getParticipantRegistry emit */
 
 // FARMER FUNCTIONS
 /**
@@ -23,28 +23,34 @@
 
 async function createAnimal(creationRequest) {
 
-  console.log('creationRequest');
+  console.log('createAnimal');
   const factory = getFactory();
   const namespace = 'org.acme.beef_network';
 
-  const create = factory.newResource(namespace, 'Animal', creationRequest.geneticId);
-  create.owner = factory.newRelationship(namespace, 'Farmer', creationRequest.owner.getIdentifier());
-  create.animalId = creationRequest.animalId;
-  create.lifeStage = 'BREEDING';
-  create.breed = creationRequest.breed;
-  create.location = creationRequest.location;
-  create.weight = creationRequest.weight;
+  const creation = factory.newResource(namespace, 'Animal', creationRequest.geneticId);
+  creation.animalId = creationRequest.animalId;
+  creation.lifeStage = 'BREEDING';
+  creation.breed = creationRequest.breed;
+  creation.location = creationRequest.location;
+  creation.weight = creationRequest.weight;
+  // Check if farmer exists in the ledger
+  creation.owner = factory.newRelationship(namespace, 'Farmer', creationRequest.owner.getIdentifier());
+  if (!creation.owner) {
+    throw new Error('Farmer does not exist!');
+  }
 
   // save the order
-  const assetRegistry = await getAssetRegistry(create.getFullyQualifiedType());
-  await assetRegistry.add(create);
+
+  const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
+  await assetRegistry.add(creation);
 
   // emit the event
   const createAnimalEvent = factory.newEvent(namespace, 'createAnimalEvent');
-  createAnimal.geneticId = create.geneticId;
-  createAnimal.owner = create.owner;
-  createAnimal.animalId = create.animalId;
-  createAnimal.location = create.location;
-  createAnimal.weight = create.weight;
-  emit(createAnimal);
+  createAnimalEvent.geneticId = creation.geneticId;
+  createAnimalEvent.owner = creation.owner;
+  createAnimalEvent.animalId = creation.animalId;
+  createAnimalEvent.location = creation.location;
+  createAnimalEvent.breed = creation.breed;
+  createAnimalEvent.weight = creation.weight;
+  emit(createAnimalEvent);
 }

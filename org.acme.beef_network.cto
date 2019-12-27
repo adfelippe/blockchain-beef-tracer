@@ -20,47 +20,9 @@ namespace org.acme.beef_network
 
 // BASE DEFINTIONS
 
-concept VehicleDetails {
-  --> Manufacturer make
-  o String modelType
-  o String colour
-}
-
-concept AnimalInfo {
-  --> Farmer owner
-  o String ID
-  o String location
-  o Double weight
-  o String vaccines
-  o String diseases
-  o DateTime slaughterDate
-}
-
-abstract participant Company identified by companyId {
-  o String companyId
-  o String name
-}
-
-participant Person identified by username {
-  o String username
-  o String email optional
-}
-
 participant Farmer identified by farmerId {
     o String farmerId
     o String contact optional
-}
-
-// MANUFACTURE DEFINITIONS
-participant Manufacturer extends Company {
-}
-
-enum OrderStatus {
-  o PLACED
-  o SCHEDULED_FOR_MANUFACTURE
-  o VIN_ASSIGNED
-  o OWNER_ASSIGNED
-  o DELIVERED
 }
 
 enum AnimalStatus {
@@ -70,27 +32,24 @@ enum AnimalStatus {
   o SLAUGHTERED
 }
 
-concept Options {
-  o String trim
-  o String interior
-  o String[] extras
-}
-
 asset Animal identified by geneticId {
   o String geneticId
   --> Farmer owner
-  o String ID
+  o String animalId
+  o String lifeStage
+  o String breed
   o String location
   o Double weight
-  o String vaccines
-  o String diseases
-  o DateTime slaughterDate
+  o String vaccines optional
+  o String diseases optional
+  o DateTime slaughterDate optional
 }
 
 transaction createAnimal {
   o String geneticId
   --> Farmer owner
-  o String ID
+  o String animalId
+  o String breed
   o String location
   o Double weight
 }
@@ -98,62 +57,8 @@ transaction createAnimal {
 event createAnimalEvent {
   o String geneticId
   --> Farmer owner
-  o String ID
+  o String animalId
+  o String breed
   o String location
   o Double weight
-}
-
-asset Order identified by orderId {
-  o String orderId
-  o VehicleDetails vehicleDetails
-  o OrderStatus orderStatus
-  o Options options
-  --> Person orderer
-}
-
-transaction PlaceOrder {
-  o String orderId
-  o VehicleDetails vehicleDetails
-  o Options options
-  --> Person orderer
-}
-
-event PlaceOrderEvent {
-  o String orderId
-  o VehicleDetails vehicleDetails
-  o Options options
-  --> Person orderer
-}
-
-transaction UpdateOrderStatus {
-  o OrderStatus orderStatus
-  o String vin optional
-  --> Order order
-}
-
-event UpdateOrderStatusEvent {
-  o OrderStatus orderStatus
-  o Order order
-}
-
-
-// REGULATOR DEFINITIONS
-participant Regulator extends Company {
-}
-
-enum VehicleStatus {
-  o ACTIVE
-  o OFF_THE_ROAD
-  o SCRAPPED
-}
-
-asset Vehicle identified by vin {
-  o String vin
-  o VehicleDetails vehicleDetails
-  o VehicleStatus vehicleStatus
-  --> Person owner optional
-}
-
-// DEMO SPECIFIC DEFINITIONS
-transaction SetupDemo {
 }

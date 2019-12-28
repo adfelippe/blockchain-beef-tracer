@@ -1,5 +1,5 @@
 /**
- * New query file
+ * Queries file
  */
 
 query selectAnimalByGeneticId {

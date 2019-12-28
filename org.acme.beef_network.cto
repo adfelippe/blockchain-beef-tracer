@@ -55,6 +55,8 @@ enum AnimalStatus {
   o REARING
   o FATTENING
   o SLAUGHTERED
+  o IN_TRANSIT
+  o ON_SALE
 }
 
 asset Animal identified by geneticId {

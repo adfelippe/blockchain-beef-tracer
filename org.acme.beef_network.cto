@@ -25,6 +25,31 @@ participant Farmer identified by farmerId {
     o String contact optional
 }
 
+participant Slaughterhouse identified by companyId {
+    o String companyId
+    o String contact optional
+}
+
+participant Transportation identified by companyId {
+    o String companyId
+    o String contact optional
+}
+
+participant ProcessingIndustry identified by companyId {
+    o String companyId
+    o String contact optional
+}
+
+participant Retail identified by companyId {
+    o String companyId
+    o String contact optional
+}
+
+participant Consumer identified by consumerId {
+    o String consumerId
+    o String contact optional
+}
+
 enum AnimalStatus {
   o BREEDING
   o REARING

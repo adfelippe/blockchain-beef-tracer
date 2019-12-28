@@ -57,6 +57,7 @@ enum AnimalStatus {
   o SLAUGHTERED
   o IN_TRANSIT
   o ON_SALE
+  o SOLD
 }
 
 asset Animal identified by geneticId {

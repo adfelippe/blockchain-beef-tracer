@@ -62,11 +62,11 @@ enum AnimalStatus {
 asset Animal identified by geneticId {
   o String geneticId
   --> Farmer owner
-  o String animalId
   o AnimalStatus lifeStage
   o String breed
   o String location
   o Double weight
+  o String animalId optional
   o String vaccines optional
   o String diseases optional
   o DateTime slaughterDate optional
@@ -77,8 +77,8 @@ transaction updateAnimal {
   --> Farmer owner
   o AnimalStatus lifeStage
   o Double weight optional
-  o String animalId optional
   o String location optional
+  o String animalId optional
   o String vaccines optional
   o String diseases optional
   o DateTime slaughterDate optional

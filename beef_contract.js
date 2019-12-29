@@ -85,13 +85,47 @@ async function updateAnimal(updateAnimalRequest) {
     throw new Error('This Farmer does not exist!')
     } else {
       // Update animal in the ledger
+      // Optional and mandatory fields are checked againt themselves to be updated
+
+      // Mandatory
       animal.lifeStage = updateAnimalRequest.lifeStage;
-      animal.animalId = updateAnimalRequest.animalId;
-      animal.weight = updateAnimalRequest.weight;
-      animal.location = updateAnimalRequest.location;
-      animal.vaccines = updateAnimalRequest.vaccines;
-      animal.diseases = updateAnimalRequest.diseases;
-      animal.slaughterDate = updateAnimalRequest.slaughterDate;
+      // Mandatory at creation only
+      if (!animal.animalId) {
+        animal.animalId = animal.animalId;
+      } else {
+        animal.animalId = animal.animalId + ' | ' + updateAnimalRequest.animalId;
+      }
+      // Mandatory at creation only
+      if (!animal.weight) {
+        animal.weight = animal.weight;
+      } else {
+        animal.weight = animal.weight + ' | ' + updateAnimalRequest.weight;
+      }
+      // Mandatory at creation only
+      if (!animal.location) {
+        animal.location = animal.location;
+      } else {
+        animal.location = animal.location + ' | ' + updateAnimalRequest.location;
+      }
+      // Optional
+      if (!animal.vaccines) {
+        animal.vaccines = updateAnimalRequest.vaccines;
+      } else if (animal.vaccines && updateAnimalRequest.vaccines) {
+        animal.vaccines = animal.vaccines + ' | ' + updateAnimalRequest.vaccines;
+      }
+      // Optional
+      if (!animal.diseases) {
+        animal.diseases = updateAnimalRequest.diseases;
+      } else if (animal.diseases && updateAnimalRequest.diseases) {
+        animal.diseases = animal.diseases + ' | ' + updateAnimalRequest.diseases;
+      }
+      // Optional
+      if (!animal.slaughterDate) {
+        animal.slaughterDate = updateAnimalRequest.slaughterDate;
+      } else if (animal.slaughterDate && updateAnimalRequest.slaughterDate) {
+        animal.slaughterDate = animal.slaughterDate + ' | ' + updateAnimalRequest.slaughterDate;
+      }
+      // Update ledger
       await animalRegistry.update(animal);
     }
     // Emit the event

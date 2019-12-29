@@ -86,6 +86,7 @@ async function updateAnimal(updateAnimalRequest) {
     } else {
       // Update animal in the ledger
       animal.lifeStage = updateAnimalRequest.lifeStage;
+      animal.animalId = updateAnimalRequest.animalId;
       animal.weight = updateAnimalRequest.weight;
       animal.location = updateAnimalRequest.location;
       animal.vaccines = updateAnimalRequest.vaccines;

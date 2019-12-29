@@ -36,7 +36,7 @@ async function createAnimal(creationRequest) {
   creation.owner = factory.newRelationship(namespace, 'Farmer', creationRequest.owner.getIdentifier());
 
   // Check if owner exists
-  const participantRegistry = await getParticipantRegistry('org.acme.beef_network.Farmer');
+  const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
   const ownerCheck = await participantRegistry.exists(creationRequest.owner.getIdentifier());
   if (!ownerCheck) {
     throw new Error('This Farmer does not exist!')
@@ -53,5 +53,47 @@ async function createAnimal(creationRequest) {
     createAnimalEvent.breed = creation.breed;
     createAnimalEvent.weight = creation.weight;
     emit(createAnimalEvent);
+  }
+}
+
+/**
+ * Create a new animal as an asset
+ * @param {org.acme.beef_network.updateAnimal} updateAnimal
+ * @brief A transaction to update information of a given animal (based on geneticId)
+ * @transaction
+ */
+async function updateAnimal(updateAnimalRequest) {
+
+  console.log('updateAnimal');
+  const factory = getFactory();
+  const namespace = 'org.acme.beef_network';
+
+  // Get animal registry and perform proper checks
+  const animalRegistry = await getAssetRegistry(namespace + '.Animal');
+  const idCheck = await animalRegistry.exists(updateAnimalRequest.geneticId.getIdentifier());
+  const animal = await animalRegistry.get(updateAnimalRequest.geneticId.getIdentifier());
+  // Get Farmer registry and perform proper checks
+  const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
+  const ownerCheck = await participantRegistry.exists(updateAnimalRequest.owner.getIdentifier());
+  animal.owner = await participantRegistry.get(updateAnimalRequest.owner.getIdentifier());
+
+  if (!idCheck) {
+    throw new Error("This Animal's genetic ID does not exist!")
+  } else {
+    // Check existence of owner
+    if (!ownerCheck) {
+    throw new Error('This Farmer does not exist!')
+    } else {
+      // Update animal in the ledger
+      animal.lifeStage = updateAnimalRequest.lifeStage;
+      animal.weight = updateAnimalRequest.weight;
+      animal.location = updateAnimalRequest.location;
+      animal.vaccines = updateAnimalRequest.vaccines;
+      animal.diseases = updateAnimalRequest.diseases;
+      animal.slaughterDate = updateAnimalRequest.slaughterDate;
+      await animalRegistry.update(animal);
+    }
+    // Emit the event
+    //const updateAnimalEvent = factory.newEvent(namespace, 'updateAnimalEvent');
   }
 }

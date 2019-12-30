@@ -48,7 +48,6 @@ async function createAnimal(creationRequest) {
     const createAnimalEvent = factory.newEvent(namespace, 'createAnimalEvent');
     createAnimalEvent.geneticId = creation.geneticId;
     createAnimalEvent.owner = creation.owner;
-    createAnimalEvent.animalId = creation.animalId;
     createAnimalEvent.location = creation.location;
     createAnimalEvent.breed = creation.breed;
     createAnimalEvent.weight = creation.weight;

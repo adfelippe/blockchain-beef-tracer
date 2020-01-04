@@ -95,6 +95,8 @@ asset Produt identified by productId {
 asset Animal identified by geneticId {
   o String geneticId
   --> Farmer owner
+  --> Transportation transportedBy
+  --> Slaughterhouse slaughterhouse
   o AnimalStatus lifeStage
   o String breed
   o String location

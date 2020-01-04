@@ -76,7 +76,7 @@ enum ProductType {
   o PROCESSED_MEAT
 }
 
-asset Produt identified by productId {
+asset Product identified by productId {
   o String productId
   --> Animal geneticId
   --> Farmer owners

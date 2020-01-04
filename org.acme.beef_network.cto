@@ -54,9 +54,42 @@ enum AnimalStatus {
   o BREEDING
   o REARING
   o FATTENING
+  o IN_TRANSIT
+  o SLAUGHTERING
+  o CUTTING
   o SLAUGHTERED
+  o DEAD
+}
+
+enum ProductStatus {
+  o PROCESSING
+  o PACKAGING
   o IN_TRANSIT
   o ON_SALE
+  o SOLD
+  o EXPIRED
+  o DISCARDED
+}
+
+enum ProductType {
+  o BEEF
+  o PROCESSED_MEAT
+}
+
+asset Produt identified by productId {
+  o String productId
+  --> Animal geneticId
+  --> Farmer owners
+  --> Retail seller
+  --> Transportation transportedBy
+  --> Slaughterhouse slaughterhouse
+  --> ProcessingIndustry processingCompany
+  o String productType
+  o String subType
+  o String weight
+  o String location
+  o String price
+  o String productIssues
 }
 
 asset Animal identified by geneticId {

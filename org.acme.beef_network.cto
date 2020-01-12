@@ -58,7 +58,7 @@ enum AnimalStatus {
   o SLAUGHTERING
   o CUTTING
   o SLAUGHTERED
-  o DEAD
+  o DECEASED
 }
 
 enum ProductStatus {
@@ -79,24 +79,24 @@ enum ProductType {
 asset Product identified by productId {
   o String productId
   --> Animal geneticId
-  --> Farmer owners
-  --> Retail seller
-  --> Transportation transportedBy
   --> Slaughterhouse slaughterhouse
-  --> ProcessingIndustry processingCompany
-  o String productType
-  o String subType
+  --> Retail retailSeller optional
+  --> Transportation transportedBy optional
+  --> ProcessingIndustry processingCompany optional
+  o ProductStatus productStatus
+  o ProductType productType
+  o String subType optional
   o String weight
   o String location
-  o String price
-  o String productIssues
+  o String price optional
+  o String productIssues optional
 }
 
 asset Animal identified by geneticId {
   o String geneticId
   --> Farmer owner
-  --> Transportation transportedBy
-  --> Slaughterhouse slaughterhouse
+  --> Transportation transportedBy optional
+  --> Slaughterhouse slaughterhouse optional
   o AnimalStatus lifeStage
   o String breed
   o String location
@@ -110,6 +110,8 @@ asset Animal identified by geneticId {
 transaction updateAnimal {
   --> Animal geneticId
   --> Farmer owner
+  --> Transportation transportedBy optional
+  --> Slaughterhouse slaughterhouse optional
   o AnimalStatus lifeStage
   o String weight optional
   o String location optional
@@ -131,10 +133,35 @@ transaction createAnimal {
   o DateTime slaughterDate optional
 }
 
+transaction createProduct {
+  o String productId
+  --> Animal geneticId
+  --> Slaughterhouse slaughterhouse
+  --> Retail retailSeller optional
+  --> Transportation transportedBy optional
+  --> ProcessingIndustry processingCompany optional
+  o ProductStatus productStatus
+  o ProductType productType
+  o String subType optional
+  o String weight
+  o String location
+  o String price optional
+  o String productIssues optional
+}
+
 event createAnimalEvent {
   o String geneticId
   --> Farmer owner
   o String breed
   o String location
   o String weight
+}
+
+event createProductEvent {
+  o String productId
+  --> Animal geneticId
+  o ProductStatus productStatus
+  o ProductType productType
+  o String weight
+  o String location
 }

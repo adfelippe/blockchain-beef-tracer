@@ -66,6 +66,8 @@ async function updateAnimal(updateAnimalRequest) {
   console.log('updateAnimal');
   const factory = getFactory();
   const namespace = 'org.acme.beef_network';
+  let transportRegistry = '';
+  let transportCheck = '';
 
   // Get animal registry and perform proper checks
   const animalRegistry = await getAssetRegistry(namespace + '.Animal');
@@ -75,6 +77,16 @@ async function updateAnimal(updateAnimalRequest) {
   const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
   const ownerCheck = await participantRegistry.exists(updateAnimalRequest.owner.getIdentifier());
   animal.owner = await participantRegistry.get(updateAnimalRequest.owner.getIdentifier());
+  // Get Transportation registry and perform proper checks
+  if (updateAnimalRequest.transportedBy) {
+    transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
+    transportCheck = await transportRegistry.exists(updateAnimalRequest.transportedBy.getIdentifier());
+    // Throw error and leave if transportation is to be updated but company doesn't exist
+    if (!transportCheck) {
+        throw new Error("This Transportation company does not exist!")
+        return;
+    }
+  }
 
   if (!idCheck) {
     throw new Error("This Animal's genetic ID does not exist!")
@@ -88,23 +100,24 @@ async function updateAnimal(updateAnimalRequest) {
 
       // Mandatory
       animal.lifeStage = updateAnimalRequest.lifeStage;
+
       // Mandatory at creation only
-      if (!animal.animalId) {
-        animal.animalId = animal.animalId;
-      } else {
-        animal.animalId = animal.animalId + ' | ' + updateAnimalRequest.animalId;
-      }
-      // Mandatory at creation only
-      if (!animal.weight) {
+      if (!animal.weight || (animal.weight && !updateAnimalRequest.weight)) {
         animal.weight = animal.weight;
-      } else {
+      } else if (animal.weight && updateAnimalRequest.weight) {
         animal.weight = animal.weight + ' | ' + updateAnimalRequest.weight;
       }
       // Mandatory at creation only
-      if (!animal.location) {
+      if (!animal.location || (animal.location && !updateAnimalRequest.location)) {
         animal.location = animal.location;
-      } else {
+      } else if (animal.location && updateAnimalRequest.location){
         animal.location = animal.location + ' | ' + updateAnimalRequest.location;
+      }
+      // Optional
+      if (!animal.animalId) {
+        animal.animalId = updateAnimalRequest.animalId;
+      } else if (animal.animalId && updateAnimalRequest.animalId) {
+        animal.animalId = animal.animalId + ' | ' + updateAnimalRequest.animalId;
       }
       // Optional
       if (!animal.vaccines) {
@@ -120,9 +133,13 @@ async function updateAnimal(updateAnimalRequest) {
       }
       // Optional
       if (!animal.slaughterDate) {
-        animal.slaughterDate = updateAnimalRequest.slaughterDate;
+          animal.slaughterDate = updateAnimalRequest.slaughterDate;
       } else if (animal.slaughterDate && updateAnimalRequest.slaughterDate) {
-        animal.slaughterDate = animal.slaughterDate + ' | ' + updateAnimalRequest.slaughterDate;
+          animal.slaughterDate = animal.slaughterDate + ' | ' + updateAnimalRequest.slaughterDate;
+      }
+      // Optional Transportation data
+      if (updateAnimalRequest.transportedBy) {
+          animal.transportedBy = await transportRegistry.get(updateAnimalRequest.transportedBy.getIdentifier());
       }
       // Update ledger
       await animalRegistry.update(animal);
@@ -130,4 +147,46 @@ async function updateAnimal(updateAnimalRequest) {
     // Emit the event
     //const updateAnimalEvent = factory.newEvent(namespace, 'updateAnimalEvent');
   }
+}
+
+/**
+ * Create a new product as an asset
+ * This new product inherits information from its originary animal
+ * @param {org.acme.beef_network.createProduct} createProduct - the createProduct transaction
+ * @transaction
+ */
+
+async function createProduct(creationRequest) {
+
+    console.log('createAnimal');
+    const factory = getFactory();
+    const namespace = 'org.acme.beef_network';
+
+    const creation = factory.newResource(namespace, 'Product', creationRequest.productId);
+    creation.productId = creationRequest.productId;
+    creation.geneticId = factory.newRelationship(namespace, 'Animal', creationRequest.geneticId.getIdentifier());
+    creation.productType = creationRequest.productType;
+    creation.productStatus = creationRequest.productStatus;
+    creation.location = creationRequest.location;
+    creation.weight = creationRequest.weight;
+
+    // Check if animal exists based on the geneticID
+    // (Products can only be created if their source animal exists in the ledger)
+    const animalRegistry = await getParticipantRegistry(namespace + '.Animal');
+    const animalCheck = await participantRegistry.exists(creationRequest.geneticId.getIdentifier());
+    if (!animalCheck) {
+      throw new Error('This Animal does not exist!')
+    } else {
+    	// save the order
+      const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
+      await assetRegistry.add(creation);
+      // emit the event
+      const createProductEvent = factory.newEvent(namespace, 'createProductEvent');
+      createProductEvent.productId = creationRequest.productId;
+      createProductEvent.productType = creationRequest.productType;
+      createProductEvent.productStatus = creationRequest.productStatus;
+      createProductEvent.location = creationRequest.location;
+      createProductEvent.weight = creationRequest.weight;
+      emit(createProductEvent);
+    }
 }

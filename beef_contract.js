@@ -68,15 +68,19 @@ async function updateAnimal(updateAnimalRequest) {
   const namespace = 'org.acme.beef_network';
   let transportRegistry = '';
   let transportCheck = '';
+  let slaughterhouseRegistry = '';
+  let slaughterhouseCheck = '';
 
   // Get animal registry and perform proper checks
   const animalRegistry = await getAssetRegistry(namespace + '.Animal');
   const idCheck = await animalRegistry.exists(updateAnimalRequest.geneticId.getIdentifier());
   const animal = await animalRegistry.get(updateAnimalRequest.geneticId.getIdentifier());
+
   // Get Farmer registry and perform proper checks
   const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
   const ownerCheck = await participantRegistry.exists(updateAnimalRequest.owner.getIdentifier());
   animal.owner = await participantRegistry.get(updateAnimalRequest.owner.getIdentifier());
+
   // Get Transportation registry and perform proper checks
   if (updateAnimalRequest.transportedBy) {
     transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
@@ -87,6 +91,18 @@ async function updateAnimal(updateAnimalRequest) {
         return;
     }
   }
+
+  // Get Slaughterhouse registry and perform proper checks
+  if (updateAnimalRequest.slaughterhouse) {
+    slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
+    slaughterhouseCheck = await slaughterhouseRegistry.exists(updateAnimalRequest.slaughterhouse.getIdentifier());
+    // Throw error and leave if transportation is to be updated but company doesn't exist
+    if (!slaughterhouseCheck) {
+        throw new Error("This Slaughterhouse company does not exist!")
+        return;
+    }
+  }
+
 
   if (!idCheck) {
     throw new Error("This Animal's genetic ID does not exist!")
@@ -132,14 +148,18 @@ async function updateAnimal(updateAnimalRequest) {
         animal.diseases = animal.diseases + ' | ' + updateAnimalRequest.diseases;
       }
       // Optional
-      if (!animal.slaughterDate) {
+      // Always updated if requested
+      // It is useful if some data needs to be fixed
+      if (updateAnimalRequest.slaughterDate) {
           animal.slaughterDate = updateAnimalRequest.slaughterDate;
-      } else if (animal.slaughterDate && updateAnimalRequest.slaughterDate) {
-          animal.slaughterDate = animal.slaughterDate + ' | ' + updateAnimalRequest.slaughterDate;
       }
       // Optional Transportation data
       if (updateAnimalRequest.transportedBy) {
           animal.transportedBy = await transportRegistry.get(updateAnimalRequest.transportedBy.getIdentifier());
+      }
+      // Optional Slaughterhouse data
+      if (updateAnimalRequest.slaughterhouse) {
+          animal.slaughterhouse = await slaughterhouseRegistry.get(updateAnimalRequest.slaughterhouse.getIdentifier());
       }
       // Update ledger
       await animalRegistry.update(animal);
@@ -164,29 +184,35 @@ async function createProduct(creationRequest) {
 
     const creation = factory.newResource(namespace, 'Product', creationRequest.productId);
     creation.productId = creationRequest.productId;
-    creation.geneticId = factory.newRelationship(namespace, 'Animal', creationRequest.geneticId.getIdentifier());
     creation.productType = creationRequest.productType;
     creation.productStatus = creationRequest.productStatus;
     creation.location = creationRequest.location;
     creation.weight = creationRequest.weight;
+    creation.geneticId = factory.newRelationship(namespace, 'Animal', creationRequest.geneticId.getIdentifier());
+    creation.slaughterhouse = factory.newRelationship(namespace, 'Slaughterhouse', creationRequest.slaughterhouse.getIdentifier());
 
-    // Check if animal exists based on the geneticID
+    // Check if animal and slaughterhouse exists based on their ID
     // (Products can only be created if their source animal exists in the ledger)
-    const animalRegistry = await getParticipantRegistry(namespace + '.Animal');
-    const animalCheck = await participantRegistry.exists(creationRequest.geneticId.getIdentifier());
+    const animalRegistry = await getAssetRegistry(namespace + '.Animal');
+    const animalCheck = await animalRegistry.exists(creationRequest.geneticId.getIdentifier());
+    const slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
+    const slaughterhouseCheck = await slaughterhouseRegistry.exists(creationRequest.slaughterhouse.getIdentifier());
     if (!animalCheck) {
       throw new Error('This Animal does not exist!')
+    } else if (!slaughterhouseCheck) {
+      throw new Error('This Slaughterhouse Company does not exist!')
     } else {
     	// save the order
       const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
       await assetRegistry.add(creation);
       // emit the event
       const createProductEvent = factory.newEvent(namespace, 'createProductEvent');
-      createProductEvent.productId = creationRequest.productId;
-      createProductEvent.productType = creationRequest.productType;
-      createProductEvent.productStatus = creationRequest.productStatus;
-      createProductEvent.location = creationRequest.location;
-      createProductEvent.weight = creationRequest.weight;
+      createProductEvent.geneticId = creation.geneticId;
+      createProductEvent.productId = creation.productId;
+      createProductEvent.productType = creation.productType;
+      createProductEvent.productStatus = creation.productStatus;
+      createProductEvent.location = creation.location;
+      createProductEvent.weight = creation.weight;
       emit(createProductEvent);
     }
 }

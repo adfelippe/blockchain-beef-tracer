@@ -3,3 +3,19 @@ A beef traceability smart contract developed using Hyperledger Fabric Composer
 
 ## Setup
 Please, follow the instructions [here](https://hyperledger.github.io/composer/latest/installing/development-tools.html) to install the Hyperledger Composer and the Hyperledger Fabric environment.
+
+Once you're done with Fabric download, run the scripts inside the `fabric-dev-serves` folder in the following order:
+
+```
+./createPeerAdminCard.sh
+./startFabric.sh
+```
+
+After that, the docker containers will be created and ready to be deployed.
+
+Bring-up the containers running `startContainers.sh`
+
+In order to deploy the beef-tracer blockchain, run `startBeefNetwork.sh`. It needs to be done only once.
+
+Then, everytime you need to stop or start the system, run start and stopContainers.
+If you run start, also run `composer-playground` to start the composer at the port `8080`.

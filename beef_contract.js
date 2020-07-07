@@ -56,7 +56,7 @@ async function createAnimal(creationRequest) {
 }
 
 /**
- * Create a new animal as an asset
+ * Update an existing animal
  * @param {org.acme.beef_network.updateAnimal} updateAnimal
  * @brief A transaction to update information of a given animal (based on geneticId)
  * @transaction
@@ -178,41 +178,111 @@ async function updateAnimal(updateAnimalRequest) {
 
 async function createProduct(creationRequest) {
 
-    console.log('createAnimal');
+    console.log('createProduct');
     const factory = getFactory();
     const namespace = 'org.acme.beef_network';
 
     const creation = factory.newResource(namespace, 'Product', creationRequest.productId);
     creation.productId = creationRequest.productId;
     creation.productType = creationRequest.productType;
+  	creation.subType = creationRequest.subType;
     creation.productStatus = creationRequest.productStatus;
     creation.location = creationRequest.location;
     creation.weight = creationRequest.weight;
+  	creation.price = creationRequest.price;
+  	creation.saleDate = creationRequest.saleDate;
+  	creation.productIssues = creationRequest.productIssues;
     creation.geneticId = factory.newRelationship(namespace, 'Animal', creationRequest.geneticId.getIdentifier());
-    creation.slaughterhouse = factory.newRelationship(namespace, 'Slaughterhouse', creationRequest.slaughterhouse.getIdentifier());
+  	creation.slaughterhouse = factory.newRelationship(namespace, 'Slaughterhouse', creationRequest.slaughterhouse.getIdentifier());
+  	
+  	// Optional
+  	if (creationRequest.transportedBy)
+      creation.transportedBy = factory.newRelationship(namespace, 'Transportation', creationRequest.transportedBy.getIdentifier());
+  	if (creationRequest.retailSeller)
+      creation.retailSeller = factory.newRelationship(namespace, 'Retail', creationRequest.retailSeller.getIdentifier());
+   	if (creation.processingCompany)
+      creation.processingCompany = factory.newRelationship(namespace, 'ProcessingIndustry', creationRequest.processingCompany.getIdentifier());
 
-    // Check if animal and slaughterhouse exists based on their ID
+    // Check if exstent participants
     // (Products can only be created if their source animal exists in the ledger)
     const animalRegistry = await getAssetRegistry(namespace + '.Animal');
     const animalCheck = await animalRegistry.exists(creationRequest.geneticId.getIdentifier());
     const slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
     const slaughterhouseCheck = await slaughterhouseRegistry.exists(creationRequest.slaughterhouse.getIdentifier());
+  	const procIndustryRegistry = await getParticipantRegistry(namespace + '.ProcessingIndustry');
+    const procIndustryCheck = await procIndustryRegistry.exists(creationRequest.processingCompany.getIdentifier());
+  	const retailRegistry = await getParticipantRegistry(namespace + '.Retail');
+    const retailCheck = await retailRegistry.exists(creationRequest.retailSeller.getIdentifier());
+  	const transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
+    const transportCheck = await transportRegistry.exists(creationRequest.transportedBy.getIdentifier());
+  
     if (!animalCheck) {
       throw new Error('This Animal does not exist!')
-    } else if (!slaughterhouseCheck) {
-      throw new Error('This Slaughterhouse Company does not exist!')
-    } else {
-    	// save the order
-      const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
-      await assetRegistry.add(creation);
-      // emit the event
-      const createProductEvent = factory.newEvent(namespace, 'createProductEvent');
-      createProductEvent.geneticId = creation.geneticId;
-      createProductEvent.productId = creation.productId;
-      createProductEvent.productType = creation.productType;
-      createProductEvent.productStatus = creation.productStatus;
-      createProductEvent.location = creation.location;
-      createProductEvent.weight = creation.weight;
-      emit(createProductEvent);
+      return
     }
+    
+  	if (!slaughterhouseCheck) {
+      throw new Error('This Slaughterhouse Company does not exist!')
+      return
+    }
+  
+  	if (!procIndustryCheck) {
+      throw new Error('This Processing Industry does not exist!')
+      return
+    }
+  
+	if (!retailCheck) {
+      throw new Error('This Retail Seller does not exist!')
+      return
+    }
+  
+  	if (!transportCheck) {
+      throw new Error('This Transportation Company does not exist!')
+      return
+    }
+  
+	// save the order
+    const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
+    await assetRegistry.add(creation);
 }
+
+/**
+ * Update an existing product
+ * @param {org.acme.beef_network.updateAnimal} updateAnimal
+ * @brief A transaction to update information of a given animal (based on geneticId)
+ * @transaction
+ 
+async function updateProduct(updateProductRequest) {
+  	
+  	console.log('updateProduct');
+    const factory = getFactory();
+    const namespace = 'org.acme.beef_network';
+  
+    // Get product registry and perform proper checks
+  	const productRegistry = await getAssetRegistry(namespace + '.Product');
+  	const idCheck = await productRegistry.exists(updateProductRequest.productId.getIdentifier());
+  	const product = await productRegistry.get(updateProductRequest.productId.getIdentifier());
+  
+  	// Get retail seller registry and perform proper checks
+  	const retailSellerRegistry = await getParticipantRegistry(namespace + '.Retail');
+  	const retailCheck = await participantRegistry.exists(updateAnimalRequest.owner.getIdentifier());
+  	product.retailSeller = await participantRegistry.get(updateAnimalRequest.owner.getIdentifier());
+  
+  	if (!idCheck) {
+    	throw new Error("This Product's ID does not exist!")
+      	return;
+  	}
+  
+    // Get Transportation registry and perform proper checks
+ 	if (updateProductRequest.transportedBy) {
+    	transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
+   		transportCheck = await transportRegistry.exists(updateProductRequest.transportedBy.getIdentifier());
+      	// Throw error and leave if transportation is to be updated but company doesn't exist
+    	if (!transportCheck) {
+        throw new Error("This Transportation company does not exist!")
+        return;
+    	}
+  	}
+
+}*/
+

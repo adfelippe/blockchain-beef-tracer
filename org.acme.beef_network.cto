@@ -90,6 +90,7 @@ asset Product identified by productId {
   o String location
   o String price optional
   o String productIssues optional
+  o DateTime saleDate optional
 }
 
 asset Animal identified by geneticId {
@@ -147,6 +148,7 @@ transaction createProduct {
   o String location
   o String price optional
   o String productIssues optional
+  o DateTime saleDate optional
 }
 
 event createAnimalEvent {
@@ -165,3 +167,4 @@ event createProductEvent {
   o String weight
   o String location
 }
+

@@ -151,6 +151,22 @@ transaction createProduct {
   o DateTime saleDate optional
 }
 
+transaction updateProduct {
+  --> Product productId
+  --> Retail retailSeller optional
+  --> Transportation transportedBy optional
+  --> ProcessingIndustry processingCompany optional
+  o ProductStatus productStatus optional
+  o ProductType productType optional
+  o String subType optional
+  o String weight optional
+  o String location optional
+  o String price optional
+  o String productIssues optional
+  o DateTime saleDate optional
+}
+
+
 event createAnimalEvent {
   o String geneticId
   --> Farmer owner

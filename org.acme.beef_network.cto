@@ -90,7 +90,6 @@ asset Product identified by productId {
   o String location
   o String price optional
   o String productIssues optional
-  o DateTime saleDate optional
 }
 
 asset Animal identified by geneticId {
@@ -108,26 +107,26 @@ asset Animal identified by geneticId {
   o DateTime slaughterDate optional
 }
 
-transaction createAnimal {
-  o String geneticId
+transaction updateAnimal {
+  --> Animal geneticId
   --> Farmer owner
-  o String breed
-  o String location
-  o String weight
+  --> Transportation transportedBy optional
+  --> Slaughterhouse slaughterhouse optional
+  o AnimalStatus lifeStage
+  o String weight optional
+  o String location optional
   o String animalId optional
   o String vaccines optional
   o String diseases optional
   o DateTime slaughterDate optional
 }
 
-transaction updateAnimal {
-  --> Animal animal
-  --> Farmer owner optional
-  o String transportedBy optional
-  o String slaughterhouse optional
-  o AnimalStatus lifeStage optional
-  o String weight optional
-  o String location optional
+transaction createAnimal {
+  o String geneticId
+  --> Farmer owner
+  o String breed
+  o String location
+  o String weight
   o String animalId optional
   o String vaccines optional
   o String diseases optional
@@ -148,14 +147,13 @@ transaction createProduct {
   o String location
   o String price optional
   o String productIssues optional
-  o DateTime saleDate optional
 }
 
 transaction updateProduct {
-  --> Product productId
+  --> Product product
   --> Retail retailSeller optional
   --> Transportation transportedBy optional
-  --> ProcessingIndustry processingCompany optional
+  --> ProcessingIndustry processingIndustry optional
   o ProductStatus productStatus optional
   o ProductType productType optional
   o String subType optional
@@ -163,9 +161,7 @@ transaction updateProduct {
   o String location optional
   o String price optional
   o String productIssues optional
-  o DateTime saleDate optional
 }
-
 
 event createAnimalEvent {
   o String geneticId

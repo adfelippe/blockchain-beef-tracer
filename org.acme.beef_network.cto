@@ -108,26 +108,26 @@ asset Animal identified by geneticId {
   o DateTime slaughterDate optional
 }
 
-transaction updateAnimal {
-  --> Animal geneticId
-  --> Farmer owner
-  --> Transportation transportedBy optional
-  --> Slaughterhouse slaughterhouse optional
-  o AnimalStatus lifeStage
-  o String weight optional
-  o String location optional
-  o String animalId optional
-  o String vaccines optional
-  o String diseases optional
-  o DateTime slaughterDate optional
-}
-
 transaction createAnimal {
   o String geneticId
   --> Farmer owner
   o String breed
   o String location
   o String weight
+  o String animalId optional
+  o String vaccines optional
+  o String diseases optional
+  o DateTime slaughterDate optional
+}
+
+transaction updateAnimal {
+  --> Animal animal
+  --> Farmer owner optional
+  o String transportedBy optional
+  o String slaughterhouse optional
+  o AnimalStatus lifeStage optional
+  o String weight optional
+  o String location optional
   o String animalId optional
   o String vaccines optional
   o String diseases optional
@@ -183,4 +183,3 @@ event createProductEvent {
   o String weight
   o String location
 }
-

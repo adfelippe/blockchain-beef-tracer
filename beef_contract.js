@@ -229,21 +229,81 @@ async function updateProduct(request) {
     const factory = getFactory();
     const namespace = 'org.acme.beef_network';
 
-    // Get animal registry and perform proper checks
     const productRegistry = await getAssetRegistry(namespace + '.Product');
     const idCheck = await productRegistry.exists(request.product.getIdentifier());
-    let product = await productRegistry.get(request.product.getIdentifier());
 
-    const retailRegistry = await getParticipantRegistry(namespace + '.Retail');
-    const retailCheck = await retailRegistry.exists(request.retailSeller.getIdentifier());
-
-    if (!retailCheck) {
-        throw new Error('This Retail company does not exist!');
+    if (!idCheck) {
+        throw new Error('This product does not exist in the ledger!');
         return;
     }
 
-    if (request.retailSeller)
-        product.retailSeller = await retailRegistry.get(request.retailSeller.getIdentifier());
+    let product = await productRegistry.get(request.product.getIdentifier());
+
+    if (request.transportedBy) {
+        const transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
+        const transportCheck = await transportRegistry.exists(request.transportedBy.getIdentifier());
+        if (transportCheck) {
+            product.transportedBy = await transportRegistry.get(request.transportedBy.getIdentifier());
+        } else {
+            throw new Error('This Transportation company does not exist!');
+            return;
+        }
+    }
+
+    if (request.retailSeller) {
+        const retailRegistry = await getParticipantRegistry(namespace + '.Retail');
+        const retailCheck = await retailRegistry.exists(request.retailSeller.getIdentifier());
+        if (retailCheck) {
+            product.retailSeller = await retailRegistry.get(request.retailSeller.getIdentifier());
+        } else {
+            throw new Error('This Retail company does not exist!');
+            return;
+        }
+    }
+
+    if (request.processingIndustry) {
+        const procIndRegistry = await getParticipantRegistry(namespace + '.ProcessingIndustry');
+        const procIndCheck = await procIndRegistry.exists(request.processingIndustry.getIdentifier());
+        if (procIndCheck) {
+            product.processingCompany = await procIndRegistry.get(request.processingIndustry.getIdentifier());
+        } else {
+            throw new Error('This Processing Industry does not exist!');
+            return;
+        }
+    }
+
+    if (request.productStatus)
+        product.productStatus = request.productStatus;
+
+    if (request.subType)
+        product.subType = request.subType;
+
+    if (request.weight)
+        if (product.weight)
+            product.weight = product.weight + ' | ' + request.weight;
+        else
+            product.weight = request.weight;
+
+    if (request.location) {
+        if (product.location)
+            product.location = product.location + ' | ' + request.location;
+        else
+            product.location = request.location;
+    }
+
+    if (request.price) {
+        if (product.price)
+            product.price = product.price + ' | ' + request.price;
+        else
+            product.price = request.price;
+    }
+
+    if (request.productIssues) {
+        if (product.productIssues)
+            product.productIssues = product.productIssues + ' | ' + request.productIssues;
+        else
+            product.productIssues = request.productIssues;
+    }
 
     await productRegistry.update(product);
 }

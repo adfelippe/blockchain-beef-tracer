@@ -7,7 +7,6 @@ import sys
 import os
 
 def runSubmitTransactionCommand(command):
-    print('command: {}'.format(command))
     stream = os.popen(command)
     output = stream.read()
     print(output)

@@ -56,117 +56,93 @@ async function createAnimal(creationRequest) {
 }
 
 /**
- * Create a new animal as an asset
+ * Update a Animal in the ledger
  * @param {org.acme.beef_network.updateAnimal} updateAnimal
- * @brief A transaction to update information of a given animal (based on geneticId)
+ * @brief A transaction to update data in the ledger of a given product
  * @transaction
  */
-async function updateAnimal(updateAnimalRequest) {
+async function updateAnimal(request) {
 
-  console.log('updateAnimal');
-  const factory = getFactory();
-  const namespace = 'org.acme.beef_network';
-  let transportRegistry = '';
-  let transportCheck = '';
-  let slaughterhouseRegistry = '';
-  let slaughterhouseCheck = '';
+    console.log('updateAnimal');
+    const factory = getFactory();
+    const namespace = 'org.acme.beef_network';
 
-  // Get animal registry and perform proper checks
-  const animalRegistry = await getAssetRegistry(namespace + '.Animal');
-  const idCheck = await animalRegistry.exists(updateAnimalRequest.geneticId.getIdentifier());
-  const animal = await animalRegistry.get(updateAnimalRequest.geneticId.getIdentifier());
+    // This is a mandatory field
+    const animalRegistry = await getAssetRegistry(namespace + '.Animal');
+    const idCheck = await animalRegistry.exists(request.geneticId.getIdentifier());
 
-  // Get Farmer registry and perform proper checks
-  const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
-  const ownerCheck = await participantRegistry.exists(updateAnimalRequest.owner.getIdentifier());
-  animal.owner = await participantRegistry.get(updateAnimalRequest.owner.getIdentifier());
-
-  // Get Transportation registry and perform proper checks
-  if (updateAnimalRequest.transportedBy) {
-    transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
-    transportCheck = await transportRegistry.exists(updateAnimalRequest.transportedBy.getIdentifier());
-    // Throw error and leave if transportation is to be updated but company doesn't exist
-    if (!transportCheck) {
-        throw new Error("This Transportation company does not exist!")
+    if (!idCheck) {
+        throw new Error("This Animal does not exist!");
         return;
     }
-  }
 
-  // Get Slaughterhouse registry and perform proper checks
-  if (updateAnimalRequest.slaughterhouse) {
-    slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
-    slaughterhouseCheck = await slaughterhouseRegistry.exists(updateAnimalRequest.slaughterhouse.getIdentifier());
-    // Throw error and leave if transportation is to be updated but company doesn't exist
-    if (!slaughterhouseCheck) {
-        throw new Error("This Slaughterhouse company does not exist!")
-        return;
-    }
-  }
+    let animal = await animalRegistry.get(request.geneticId.getIdentifier());
 
-
-  if (!idCheck) {
-    throw new Error("This Animal's genetic ID does not exist!")
-  } else {
-    // Check existence of owner
-    if (!ownerCheck) {
-    throw new Error('This Farmer does not exist!')
+    // This is a mandatory field
+    const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
+    const ownerCheck = await participantRegistry.exists(request.owner.getIdentifier());
+    if (ownerCheck) {
+        animal.owner = await participantRegistry.get(request.owner.getIdentifier());
     } else {
-      // Update animal in the ledger
-      // Optional and mandatory fields are checked againt themselves to be updated
-
-      // Mandatory
-      animal.lifeStage = updateAnimalRequest.lifeStage;
-
-      // Mandatory at creation only
-      if (!animal.weight || (animal.weight && !updateAnimalRequest.weight)) {
-        animal.weight = animal.weight;
-      } else if (animal.weight && updateAnimalRequest.weight) {
-        animal.weight = animal.weight + ' | ' + updateAnimalRequest.weight;
-      }
-      // Mandatory at creation only
-      if (!animal.location || (animal.location && !updateAnimalRequest.location)) {
-        animal.location = animal.location;
-      } else if (animal.location && updateAnimalRequest.location){
-        animal.location = animal.location + ' | ' + updateAnimalRequest.location;
-      }
-      // Optional
-      if (!animal.animalId) {
-        animal.animalId = updateAnimalRequest.animalId;
-      } else if (animal.animalId && updateAnimalRequest.animalId) {
-        animal.animalId = animal.animalId + ' | ' + updateAnimalRequest.animalId;
-      }
-      // Optional
-      if (!animal.vaccines) {
-        animal.vaccines = updateAnimalRequest.vaccines;
-      } else if (animal.vaccines && updateAnimalRequest.vaccines) {
-        animal.vaccines = animal.vaccines + ' | ' + updateAnimalRequest.vaccines;
-      }
-      // Optional
-      if (!animal.diseases) {
-        animal.diseases = updateAnimalRequest.diseases;
-      } else if (animal.diseases && updateAnimalRequest.diseases) {
-        animal.diseases = animal.diseases + ' | ' + updateAnimalRequest.diseases;
-      }
-      // Optional
-      // Always updated if requested
-      // It is useful if some data needs to be fixed
-      if (updateAnimalRequest.slaughterDate) {
-          animal.slaughterDate = updateAnimalRequest.slaughterDate;
-      }
-      // Optional Transportation data
-      if (updateAnimalRequest.transportedBy) {
-          animal.transportedBy = await transportRegistry.get(updateAnimalRequest.transportedBy.getIdentifier());
-      }
-      // Optional Slaughterhouse data
-      if (updateAnimalRequest.slaughterhouse) {
-          animal.slaughterhouse = await slaughterhouseRegistry.get(updateAnimalRequest.slaughterhouse.getIdentifier());
-      }
-      // Update ledger
-      await animalRegistry.update(animal);
+        throw new Error("This Farmer does not exist!");
+        return;
     }
-    // Emit the event
-    //const updateAnimalEvent = factory.newEvent(namespace, 'updateAnimalEvent');
-  }
+
+    if (request.transportedBy) {
+        transportRegistry = await getParticipantRegistry(namespace + '.Transportation');
+        transportCheck = await transportRegistry.exists(request.transportedBy.getIdentifier());
+        // Throw error and leave if transportation is to be updated but company doesn't exist
+        if (!transportCheck) {
+            throw new Error("This Transportation company does not exist!");
+            return;
+        } else {
+            animal.transportedBy = await transportRegistry.get(request.transportedBy.getIdentifier());
+        }
+    }
+
+    // Get Slaughterhouse registry and perform proper checks
+    if (request.slaughterhouse) {
+        slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
+        slaughterhouseCheck = await slaughterhouseRegistry.exists(request.slaughterhouse.getIdentifier());
+        // Throw error and leave if transportation is to be updated but company doesn't exist
+        if (!slaughterhouseCheck) {
+            throw new Error("This Slaughterhouse company does not exist!")
+            return;
+        } else {
+            animal.slaughterhouse = await slaughterhouseRegistry.get(request.slaughterhouse.getIdentifier());
+        }
+    }
+
+    // Always mandatory
+    animal.lifeStage = request.lifeStage;
+
+    // Mandatory at creation only
+    if (request.weight)
+        animal.weight = animal.weight + ' | ' + request.weight;
+
+    if (request.location)
+        animal.location = animal.location + ' | ' + request.location;
+
+    // Always optional
+    if (request.animalId && animal.animalId)
+        animal.animalId = animal.animalId + ' | ' + request.animalId;
+    else if (request.animalId)
+        animal.animalId = request.animalId;
+
+    if (request.vaccines && animal.vaccines)
+        animal.vaccines = animal.vaccines + ' | ' + request.vaccines;
+    else if (request.vaccines)
+        animal.vaccines = request.vaccines;
+
+    if (request.diseases && animal.diseases)
+        animal.diseases = animal.diseases + ' | ' + request.diseases;
+    else if (request.diseases)
+    animal.diseases = request.diseases;
+
+    if (request.slaughterDate)
+        animal.slaughterDate = request.slaughterDate;
+
+    await animalRegistry.update(animal);
 }
 
 /**
@@ -219,8 +195,8 @@ async function createProduct(creationRequest) {
 
 /**
  * Update a product in the ledger
- * @param {org.acme.beef_network.updateProduct} updateAnimal
- * @brief A transaction to update information of a given animal (based on geneticId)
+ * @param {org.acme.beef_network.updateProduct} updateProduct
+ * @brief A transaction to update data in the ledger of a given product
  * @transaction
  */
 async function updateProduct(request) {
@@ -275,35 +251,34 @@ async function updateProduct(request) {
     if (request.productStatus)
         product.productStatus = request.productStatus;
 
+    if (request.productType)
+        product.productType = request.productType;
+
     if (request.subType)
         product.subType = request.subType;
 
-    if (request.weight)
-        if (product.weight)
-            product.weight = product.weight + ' | ' + request.weight;
-        else
-            product.weight = request.weight;
+    if (request.weight && product.weight)
+        product.weight = product.weight + ' | ' + request.weight;
+    else if (request.weight)
+        product.weight = request.weight;
 
-    if (request.location) {
-        if (product.location)
-            product.location = product.location + ' | ' + request.location;
-        else
-            product.location = request.location;
-    }
+    if (request.location && product.location)
+        product.location = product.location + ' | ' + request.location;
+    else if (request.location)
+        product.location = request.location;
 
-    if (request.price) {
-        if (product.price)
-            product.price = product.price + ' | ' + request.price;
-        else
-            product.price = request.price;
-    }
+    if (request.price && product.price)
+        product.price = product.price + ' | ' + request.price;
+    else if (request.price)
+        product.price = request.price;
 
-    if (request.productIssues) {
-        if (product.productIssues)
-            product.productIssues = product.productIssues + ' | ' + request.productIssues;
-        else
-            product.productIssues = request.productIssues;
-    }
+    if (request.productIssues && product.productIssues)
+        product.productIssues = product.productIssues + ' | ' + request.productIssues;
+    else if (request.productIssues)
+        product.productIssues = request.productIssues;
+
+    if (request.saleDate)
+        product.saleDate = request.saleDate;
 
     await productRegistry.update(product);
 }

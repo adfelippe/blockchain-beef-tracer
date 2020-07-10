@@ -21,23 +21,23 @@
  * @transaction
  */
 
-async function createAnimal(creationRequest) {
+async function createAnimal(request) {
 
   console.log('createAnimal');
   const factory = getFactory();
   const namespace = 'org.acme.beef_network';
 
-  const creation = factory.newResource(namespace, 'Animal', creationRequest.geneticId);
-  creation.animalId = creationRequest.animalId;
+  const creation = factory.newResource(namespace, 'Animal', request.geneticId);
+  creation.animalId = request.animalId;
   creation.lifeStage = 'BREEDING';
-  creation.breed = creationRequest.breed;
-  creation.location = creationRequest.location;
-  creation.weight = creationRequest.weight;
-  creation.owner = factory.newRelationship(namespace, 'Farmer', creationRequest.owner.getIdentifier());
+  creation.breed = request.breed;
+  creation.location = request.location;
+  creation.weight = request.weight;
+  creation.owner = factory.newRelationship(namespace, 'Farmer', request.owner.getIdentifier());
 
   // Check if owner exists
   const participantRegistry = await getParticipantRegistry(namespace + '.Farmer');
-  const ownerCheck = await participantRegistry.exists(creationRequest.owner.getIdentifier());
+  const ownerCheck = await participantRegistry.exists(request.owner.getIdentifier());
   if (!ownerCheck) {
     throw new Error('This Farmer does not exist!')
   } else {
@@ -152,45 +152,71 @@ async function updateAnimal(request) {
  * @transaction
  */
 
-async function createProduct(creationRequest) {
+async function createProduct(request) {
 
     console.log('createAnimal');
     const factory = getFactory();
     const namespace = 'org.acme.beef_network';
 
-    const creation = factory.newResource(namespace, 'Product', creationRequest.productId);
-    creation.productId = creationRequest.productId;
-    creation.productType = creationRequest.productType;
-    creation.productStatus = creationRequest.productStatus;
-    creation.location = creationRequest.location;
-    creation.weight = creationRequest.weight;
-    creation.geneticId = factory.newRelationship(namespace, 'Animal', creationRequest.geneticId.getIdentifier());
-    creation.slaughterhouse = factory.newRelationship(namespace, 'Slaughterhouse', creationRequest.slaughterhouse.getIdentifier());
+    const creation = factory.newResource(namespace, 'Product', request.productId);
+    // Mandatory fields inherited from relationships
+    creation.geneticId = factory.newRelationship(namespace, 'Animal', request.geneticId.getIdentifier());
+    creation.slaughterhouse = factory.newRelationship(namespace, 'Slaughterhouse', request.slaughterhouse.getIdentifier());
 
-    // Check if animal and slaughterhouse exists based on their ID
+    // Check if animal exists based on their ID
     // (Products can only be created if their source animal exists in the ledger)
     const animalRegistry = await getAssetRegistry(namespace + '.Animal');
-    const animalCheck = await animalRegistry.exists(creationRequest.geneticId.getIdentifier());
-    const slaughterhouseRegistry = await getParticipantRegistry(namespace + '.Slaughterhouse');
-    const slaughterhouseCheck = await slaughterhouseRegistry.exists(creationRequest.slaughterhouse.getIdentifier());
+    const animalCheck = await animalRegistry.exists(request.geneticId.getIdentifier());
+
     if (!animalCheck) {
-      throw new Error('This Animal does not exist!')
-    } else if (!slaughterhouseCheck) {
-      throw new Error('This Slaughterhouse Company does not exist!')
-    } else {
-    	// save the order
-      const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
-      await assetRegistry.add(creation);
-      // emit the event
-      const createProductEvent = factory.newEvent(namespace, 'createProductEvent');
-      createProductEvent.geneticId = creation.geneticId;
-      createProductEvent.productId = creation.productId;
-      createProductEvent.productType = creation.productType;
-      createProductEvent.productStatus = creation.productStatus;
-      createProductEvent.location = creation.location;
-      createProductEvent.weight = creation.weight;
-      emit(createProductEvent);
+      throw new Error('This Animal does not exist!');
+      return;
     }
+
+    // Create only if set - it's optional
+    if (request.processingIndustry) {
+        const procIndRegistry = await getParticipantRegistry(namespace + '.ProcessingIndustry');
+        const procIndCheck = await procIndRegistry.exists(request.processingIndustry.getIdentifier());
+        if (procIndCheck) {
+            creation.processingCompany = await procIndRegistry.get(request.processingIndustry.getIdentifier());
+        } else {
+            throw new Error('This Processing Industry does not exist!');
+            return;
+        }
+    }
+
+    // Create only if set - it's optional
+    if (request.retailSeller) {
+        const retailRegistry = await getParticipantRegistry(namespace + '.Retail');
+        const retailCheck = await retailRegistry.exists(request.retailSeller.getIdentifier());
+        if (retailCheck) {
+            creation.retailSeller = await retailRegistry.get(request.retailSeller.getIdentifier());
+        } else {
+            throw new Error('This Retail company does not exist!');
+            return;
+        }
+    }
+
+    // Mandatory fields
+    creation.productId = request.productId;
+    creation.productType = request.productType;
+    creation.productStatus = request.productStatus;
+    creation.weight = request.weight;
+    creation.location = request.location;
+
+    // Optional fields
+    if (request.subType)
+        creation.subType = request.subType
+
+    if (request.price)
+        creation.price = request.price
+
+    if (request.productIssues)
+        creation.productIssues = request.productIssues
+
+    // Write transaction to the ledger
+    const assetRegistry = await getAssetRegistry(creation.getFullyQualifiedType());
+    await assetRegistry.add(creation);
 }
 
 /**

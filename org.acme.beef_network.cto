@@ -139,7 +139,6 @@ transaction createProduct {
   --> Animal geneticId
   --> Slaughterhouse slaughterhouse
   --> Retail retailSeller optional
-  --> Transportation transportedBy optional
   --> ProcessingIndustry processingCompany optional
   o ProductStatus productStatus
   o ProductType productType

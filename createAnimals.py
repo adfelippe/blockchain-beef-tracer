@@ -33,7 +33,7 @@ weight = '\"weight\":\"106.51 Kg\"}\''
 
 for i in range(NumberOfAnimalsToCreate):
     geneticId = geneticId_field + '\"' + geneticId_value + '\", '
-    command = submit_command + function + geneticId + owner + breed + weight
+    command = submit_command + function + geneticId + owner + breed + location + weight
     runSubmitTransactionCommand(command)
     geneticId_Integer = int(geneticId_value)
     geneticId_Integer += 1

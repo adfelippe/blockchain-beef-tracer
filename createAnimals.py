@@ -28,11 +28,15 @@ geneticId = geneticId_field + '\"' + geneticId_value + '\", '
 owner = '\"owner\":\"resource:org.acme.beef_network.Farmer#Fazendeiro_1\", '
 breed = '\"breed\":\"Nelore\", '
 location = '\"location\":\"Santa Helena de Goias/GO\", '
+animalId = '\"animalId\":\"00155987BED47FEC | 121551BDED47FEC\", '
+vaccines = '\"vaccines\":\"Febre Aftosa | Botulismo | Clostridioses\", '
+diseases = '\"diseases\":\"Leptospirose\", '
+slaughterDate = '\"slaughterDate\":\"2020-08-23T18:40:07.555Z\", '
 weight = '\"weight\":\"106.51 Kg\"}\''
 
 for i in range(NumberOfAnimalsToCreate):
     geneticId = geneticId_field + '\"' + geneticId_value + '\", '
-    command = submit_command + function + geneticId + owner + breed + location + weight
+    command = submit_command + function + geneticId + owner + breed + location + animalId + vaccines + diseases + slaughterDate + weight
     print('Running transaction {}...'.format(i + 1))
     runSubmitTransactionCommand(command)
     geneticId_Integer = int(geneticId_value)

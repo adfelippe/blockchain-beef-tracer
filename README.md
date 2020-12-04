@@ -1,5 +1,7 @@
 # blockchain-beef-tracer
-A beef traceability smart contract developed using Hyperledger Fabric Composer
+A beef traceability smart contract developed mostly in Javascript (alongside some Shell and Python scripts) using Hyperledger Fabric Composer.
+This code is the prototype used to perform tests and validations for my Master's thesis.
+
 
 ## Setup
 Please, follow the instructions [here](https://hyperledger.github.io/composer/latest/installing/development-tools.html) to install the Hyperledger Composer and the Hyperledger Fabric environment.
